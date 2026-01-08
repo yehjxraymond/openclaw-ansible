@@ -39,6 +39,7 @@
   become_user: "{{ clawdbot_user }}"
   environment:
     PNPM_HOME: "{{ clawdbot_home }}/.local/share/pnpm"
+    PATH: "{{ clawdbot_home }}/.local/bin:{{ ansible_env.PATH }}"
 
 - name: Add pnpm bin to PATH in .bashrc
   ansible.builtin.lineinfile:
