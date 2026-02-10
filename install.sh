@@ -12,10 +12,6 @@ if [ -z "$COLORTERM" ]; then
     export COLORTERM=truecolor
 fi
 
-REPO_URL="https://raw.githubusercontent.com/openclaw/openclaw-ansible/main"
-PLAYBOOK_URL="${REPO_URL}/playbook.yml"
-TEMP_DIR=$(mktemp -d)
-
 # Colors (with 256-color support)
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -39,58 +35,60 @@ else
     exit 1
 fi
 
-# Check if running as root or with sudo access
+# Determine sudo usage
 if [ "$EUID" -eq 0 ]; then
-    echo -e "${GREEN}Running as root.${NC}"
+    echo -e "${GREEN}✓ Running as root${NC}"
     SUDO=""
-    ANSIBLE_EXTRA_VARS="-e ansible_become=false"
 else
     if ! command -v sudo &> /dev/null; then
-        echo -e "${RED}Error: sudo is not installed. Please install sudo or run as root.${NC}"
+        echo -e "${RED}✗ Error: sudo is not installed${NC}"
+        echo -e "${RED}  Please install sudo or run as root${NC}"
         exit 1
     fi
     SUDO="sudo"
-    ANSIBLE_EXTRA_VARS="--ask-become-pass"
 fi
 
-echo -e "${GREEN}[1/4] Checking prerequisites...${NC}"
+echo ""
+echo -e "${BLUE}[1/3] Installing Ansible...${NC}"
 
 # Check if Ansible is installed
 if ! command -v ansible-playbook &> /dev/null; then
-    echo -e "${YELLOW}Ansible not found. Installing...${NC}"
+    echo -e "${YELLOW}  Ansible not found, installing...${NC}"
     $SUDO apt-get update -qq
-    $SUDO apt-get install -y ansible
-    echo -e "${GREEN}✓ Ansible installed${NC}"
+    $SUDO apt-get install -y ansible git
+    echo -e "${GREEN}  ✓ Ansible installed${NC}"
 else
-    echo -e "${GREEN}✓ Ansible already installed${NC}"
+    ANSIBLE_VERSION=$(ansible --version | head -n1)
+    echo -e "${GREEN}  ✓ Ansible already installed (${ANSIBLE_VERSION})${NC}"
 fi
 
-echo -e "${GREEN}[2/5] Downloading playbook...${NC}"
-
-# Download the playbook and role files
-cd "$TEMP_DIR"
-
-# For simplicity, we'll clone the entire repo
-echo "Cloning repository..."
-git clone https://github.com/openclaw/openclaw-ansible.git
-cd openclaw-ansible
-
-echo -e "${GREEN}✓ Playbook downloaded${NC}"
-
-echo -e "${GREEN}[3/5] Installing Ansible collections...${NC}"
-ansible-galaxy collection install -r requirements.yml
-
-echo -e "${GREEN}[4/5] Running Ansible playbook...${NC}"
-if [ "$EUID" -ne 0 ]; then
-    echo -e "${YELLOW}You will be prompted for your sudo password.${NC}"
-fi
 echo ""
+echo -e "${BLUE}[2/3] Installing Ansible collections...${NC}"
+ansible-galaxy collection install -r requirements.yml
+echo -e "${GREEN}  ✓ Collections installed${NC}"
 
-# Run the playbook
-./run-playbook.sh $ANSIBLE_EXTRA_VARS
+echo ""
+echo -e "${BLUE}[3/3] Verifying setup...${NC}"
+ansible-playbook playbook.yml --syntax-check > /dev/null 2>&1
+echo -e "${GREEN}  ✓ Playbook syntax valid${NC}"
 
-# Cleanup
-cd /
-rm -rf "$TEMP_DIR"
-
-# run-playbook.sh will display instructions to switch to openclaw user
+echo ""
+echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║   Setup Complete!                      ║${NC}"
+echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${CYAN}Next steps:${NC}"
+echo ""
+echo -e "  1. Run the playbook:"
+echo -e "     ${YELLOW}./run-playbook.sh${NC}"
+echo ""
+echo -e "  2. (Optional) Enable Tailscale:"
+echo -e "     ${YELLOW}./run-playbook.sh -e tailscale_enabled=true${NC}"
+echo ""
+echo -e "  3. (Optional) Use custom variables:"
+echo -e "     ${YELLOW}./run-playbook.sh -e @vars.yml${NC}"
+echo ""
+echo -e "${CYAN}Documentation:${NC}"
+echo -e "  • Configuration: ${BLUE}docs/configuration.md${NC}"
+echo -e "  • Architecture:  ${BLUE}docs/architecture.md${NC}"
+echo ""

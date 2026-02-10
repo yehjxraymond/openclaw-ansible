@@ -60,6 +60,19 @@
     openclaw_user: openclaw
     openclaw_home: /home/openclaw
 
+- name: Create .bash_profile to source .bashrc for login shells
+  ansible.builtin.copy:
+    dest: "{{ openclaw_home }}/.bash_profile"
+    owner: "{{ openclaw_user }}"
+    group: "{{ openclaw_user }}"
+    mode: '0644'
+    content: |
+      # .bash_profile - Executed for login shells
+      # Source .bashrc to ensure environment is loaded for login shells
+      if [ -f ~/.bashrc ]; then
+          . ~/.bashrc
+      fi
+
 # Fix DBus issues for systemd user services
 - name: Get openclaw user ID
   ansible.builtin.command: id -u openclaw
