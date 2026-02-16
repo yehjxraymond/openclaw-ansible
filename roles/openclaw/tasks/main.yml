@@ -17,6 +17,10 @@
   ansible.builtin.include_tasks: firewall-linux.yml
   when: not ci_test
 
+- name: Include Google Chrome installation tasks
+  ansible.builtin.include_tasks: chrome-linux.yml
+  when: not ci_test
+
 - name: Include Node.js installation tasks
   ansible.builtin.include_tasks: nodejs.yml
 

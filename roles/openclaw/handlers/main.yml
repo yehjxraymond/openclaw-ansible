@@ -8,3 +8,15 @@
   ansible.builtin.systemd:
     name: fail2ban
     state: restarted
+
+- name: Restart xvfb
+  ansible.builtin.systemd:
+    name: xvfb
+    state: restarted
+    daemon_reload: true
+
+- name: Restart openclaw-chrome
+  ansible.builtin.systemd:
+    name: openclaw-chrome
+    state: restarted
+    daemon_reload: true

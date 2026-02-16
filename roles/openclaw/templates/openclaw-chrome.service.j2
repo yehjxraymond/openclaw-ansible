@@ -1,0 +1,17 @@
+[Unit]
+Description=Chrome with Remote Debugging for OpenClaw
+After=network.target xvfb.service
+Requires=xvfb.service
+
+[Service]
+Type=simple
+User={{ openclaw_user }}
+Environment=DISPLAY=:99
+ExecStartPre=/bin/bash -c '/usr/bin/pkill -f google-chrome || true'
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/bin/google-chrome --no-sandbox --disable-gpu --no-first-run --disable-default-apps --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222 --user-data-dir={{ openclaw_home }}/.config/openclaw-chrome
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
